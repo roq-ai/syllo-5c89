@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions      = [pgcrypto]
+}
+
+model business {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  website     String?  @db.VarChar(255)
+  expertise   String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model content {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String   @db.VarChar(255)
+  body       String
+  price      Int
+  type       String   @db.VarChar(50)
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  user       user     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model follow {
+  id                             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  follower_id                    String   @db.Uuid
+  following_id                   String   @db.Uuid
+  created_at                     DateTime @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime @default(now()) @db.Timestamp(6)
+  user_follow_follower_idTouser  user     @relation("follow_follower_idTouser", fields: [follower_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_follow_following_idTouser user     @relation("follow_following_idTouser", fields: [following_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model invite {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inviter_id                   String   @db.Uuid
+  invitee_id                   String   @db.Uuid
+  role                         String   @db.VarChar(50)
+  created_at                   DateTime @default(now()) @db.Timestamp(6)
+  updated_at                   DateTime @default(now()) @db.Timestamp(6)
+  user_invite_invitee_idTouser user     @relation("invite_invitee_idTouser", fields: [invitee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_invite_inviter_idTouser user     @relation("invite_inviter_idTouser", fields: [inviter_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model share {
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sharer_id                  String   @db.Uuid
+  shared_id                  String   @db.Uuid
+  created_at                 DateTime @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime @default(now()) @db.Timestamp(6)
+  user_share_shared_idTouser user     @relation("share_shared_idTouser", fields: [shared_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_share_sharer_idTouser user     @relation("share_sharer_idTouser", fields: [sharer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model user {
+  id                               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                            String     @unique @db.VarChar(255)
+  firstName                        String?    @db.VarChar(255)
+  lastName                         String?    @db.VarChar(255)
+  roq_user_id                      String     @db.VarChar(255)
+  tenant_id                        String     @db.VarChar(255)
+  created_at                       DateTime   @default(now()) @db.Timestamp(6)
+  updated_at                       DateTime   @default(now()) @db.Timestamp(6)
+  business                         business[]
+  content                          content[]
+  follow_follow_follower_idTouser  follow[]   @relation("follow_follower_idTouser")
+  follow_follow_following_idTouser follow[]   @relation("follow_following_idTouser")
+  invite_invite_invitee_idTouser   invite[]   @relation("invite_invitee_idTouser")
+  invite_invite_inviter_idTouser   invite[]   @relation("invite_inviter_idTouser")
+  share_share_shared_idTouser      share[]    @relation("share_shared_idTouser")
+  share_share_sharer_idTouser      share[]    @relation("share_sharer_idTouser")
+}
